@@ -1,0 +1,10 @@
+# Ignore everything
+*
+
+# But not these files...
+!.gitignore
+!/sites/all
+
+
+# ...even if they are in subdirectories
+!*/
