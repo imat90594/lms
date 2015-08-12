@@ -4,6 +4,7 @@
 /profiles
 /scripts
 /themes
+.htaccess
 .project
 .buildpath
 authorize.php
@@ -12,6 +13,7 @@ COPYRIGHT.txt
 cron.php
 index.php
 install.php
+INSTALL.txt
 LICENSE.txt
 MAINTAINERS.txt
 README.txt
