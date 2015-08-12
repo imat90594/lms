@@ -1,0 +1,252 @@
+<?php
+
+function opigno_user_expiration_app_install() {
+
+  $field = field_info_field('opigno_user_expiration_amount');
+  if (empty($field)) {
+    field_create_field(array(
+      'translatable' => '0',
+      'entity_types' => array(),
+      'settings' => array(),
+      'field_name' => 'opigno_user_expiration_amount',
+      'type' => 'number_integer',
+      'module' => 'number',
+      'active' => '1',
+      'locked' => '0',
+      'cardinality' => '1',
+      'deleted' => '0',
+      'columns' => array(
+        'value' => array(
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+      ),
+      'bundles' => array(
+        'node' => array(
+          'course',
+        ),
+      ),
+    ));
+  }
+
+  $instance = field_info_instance('node', 'opigno_user_expiration_amount', 'course');
+  if (empty($instance)) {
+    field_create_instance(array(
+      'label' => 'User expiration amount',
+      'widget' => array(
+        'weight' => '3',
+        'type' => 'number',
+        'module' => 'number',
+        'active' => 0,
+        'settings' => array(),
+      ),
+      'settings' => array(
+        'min' => '',
+        'max' => '',
+        'prefix' => '',
+        'suffix' => '',
+        'user_register_form' => FALSE,
+      ),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'type' => 'number_integer',
+          'settings' => array(
+            'thousand_separator' => ' ',
+            'decimal_separator' => '.',
+            'scale' => 0,
+            'prefix_suffix' => TRUE,
+          ),
+          'module' => 'number',
+          'weight' => 4,
+        ),
+        'teaser' => array(
+          'type' => 'hidden',
+          'label' => 'above',
+          'settings' => array(),
+          'weight' => 0,
+        ),
+      ),
+      'required' => 0,
+      'description' => 'The default amount of (weeks,days,years) the user membership will expire in',
+      'default_value' => NULL,
+      'field_name' => 'opigno_user_expiration_amount',
+      'entity_type' => 'node',
+      'bundle' => 'course',
+      'deleted' => '0',
+    ));
+  }
+
+  $field = field_info_field('opigno_user_expiration_type');
+  if (empty($field)) {
+    field_create_field(array(
+      'translatable' => '0',
+      'entity_types' => array(),
+      'settings' => array(
+        'allowed_values' => array(
+          'day' => 'day',
+          'week' => 'week',
+          'month' => 'month',
+          'year' => 'year',
+        ),
+        'allowed_values_function' => '',
+      ),
+      'field_name' => 'opigno_user_expiration_type',
+      'type' => 'list_text',
+      'module' => 'list',
+      'active' => '1',
+      'locked' => '0',
+      'cardinality' => '1',
+      'deleted' => '0',
+      'columns' => array(
+        'value' => array(
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => FALSE,
+        ),
+      ),
+      'bundles' => array(
+        'node' => array(
+          'course',
+        ),
+      ),
+    ));
+  }
+
+  $instance = field_info_instance('node', 'opigno_user_expiration_type', 'course');
+  if (empty($instance)) {
+    field_create_instance(array(
+      'label' => 'User expiration type',
+      'widget' => array(
+        'weight' => '4',
+        'type' => 'options_select',
+        'module' => 'options',
+        'active' => 1,
+        'settings' => array(),
+      ),
+      'settings' => array(
+        'user_register_form' => FALSE,
+      ),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'type' => 'list_default',
+          'settings' => array(),
+          'module' => 'list',
+          'weight' => 5,
+        ),
+        'teaser' => array(
+          'type' => 'hidden',
+          'label' => 'above',
+          'settings' => array(),
+          'weight' => 0,
+        ),
+      ),
+      'required' => 0,
+      'description' => 'The default amount type which the user membership will expire in',
+      'default_value' => NULL,
+      'field_name' => 'opigno_user_expiration_type',
+      'entity_type' => 'node',
+      'bundle' => 'course',
+      'deleted' => '0',
+    ));
+  }
+
+  $field = field_info_field('opigno_user_membership_exp');
+  if (empty($field)) {
+  field_create_field(array(
+    'translatable' => '0',
+    'entity_types' => array(),
+    'settings' => array(
+      'granularity' => array(
+        'month' => 'month',
+        'day' => 'day',
+        'year' => 'year',
+        'hour' => 0,
+        'minute' => 0,
+        'second' => 0,
+      ),
+      'tz_handling' => 'none',
+      'timezone_db' => '',
+      'cache_enabled' => 0,
+      'cache_count' => '4',
+      'todate' => '',
+    ),
+    'field_name' => 'opigno_user_membership_exp',
+    'type' => 'date',
+    'module' => 'date',
+    'active' => '1',
+    'locked' => '0',
+    'cardinality' => '1',
+    'deleted' => '0',
+    'columns' => array(
+      'value' => array(
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => FALSE,
+        'sortable' => TRUE,
+        'views' => TRUE,
+      ),
+    ),
+    'bundles' => array(
+      'og_membership' => array(
+        'og_membership_type_default',
+      ),
+    ),
+  ));}
+
+  $instance = field_info_instance('og_membership', 'opigno_user_membership_exp', OG_MEMBERSHIP_TYPE_DEFAULT);
+  if (empty($instance)) {
+    field_create_instance(array(
+      'label' => 'Opigno user membership expire',
+      'widget' => array(
+        'weight' => '1',
+        'type' => 'date_popup',
+        'module' => 'date',
+        'active' => 1,
+        'settings' => array(
+          'input_format' => 'd/m/Y - H:i:s',
+          'input_format_custom' => '',
+          'year_range' => '-3:+3',
+          'increment' => '15',
+          'label_position' => 'above',
+          'text_parts' => array(),
+        ),
+      ),
+      'settings' => array(
+        'default_value' => 'blank',
+        'default_value_code' => '',
+        'default_value2' => 'same',
+        'default_value_code2' => '',
+        'user_register_form' => FALSE,
+      ),
+      'display' => array(
+        'default' => array(
+          'label' => 'above',
+          'type' => 'date_default',
+          'settings' => array(
+            'format_type' => 'long',
+            'multiple_number' => '',
+            'multiple_from' => '',
+            'multiple_to' => '',
+            'fromto' => 'both',
+          ),
+          'module' => 'date',
+          'weight' => 1,
+        ),
+      ),
+      'required' => 0,
+      'description' => '',
+      'field_name' => 'opigno_user_membership_exp',
+      'entity_type' => 'og_membership',
+      'bundle' => 'og_membership_type_default',
+      'deleted' => '0',
+    ));
+  }
+  if (function_exists('opigno_lms_refresh_strings_and_import')) {
+    opigno_lms_refresh_strings_and_import(array('rules','field'));
+  }
+}
+
+
+

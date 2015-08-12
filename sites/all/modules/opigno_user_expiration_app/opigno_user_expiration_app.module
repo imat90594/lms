@@ -1,0 +1,120 @@
+<?php
+/**
+ * @file
+ * Course user membership expiration.
+ */
+
+/**
+ * Implements hook_form_FORM_alter().
+ */
+function opigno_user_expiration_app_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['membership_fields']['opigno_user_membership_exp'][LANGUAGE_NONE])) {
+    $group = node_load($form['gid']['#value']);
+    if (isset($group->opigno_user_expiration_amount[LANGUAGE_NONE]) && isset($group->opigno_user_expiration_type[LANGUAGE_NONE])) {
+      // Don't calculate the expiration date if it was already set, or deleted.
+      if ((!isset($form['membership_fields']['opigno_user_membership_exp'][LANGUAGE_NONE][0]['#default_value']))) {
+        $date1 = opigno_user_expiration_app_get_default_date($group->nid);
+        $form['membership_fields']['opigno_user_membership_exp'][LANGUAGE_NONE][0]['#default_value']['value'] = $date1;
+        $form['membership_fields']['opigno_user_membership_exp'][LANGUAGE_NONE][0]['#default_value']['value2'] = $date1;
+      }
+    }
+  }
+
+  if (isset($form['opigno_user_membership_exp'][LANGUAGE_NONE])) {
+    $group = node_load($form['gid']['#value']);
+    if (isset($group->opigno_user_expiration_type[LANGUAGE_NONE]) && isset($group->opigno_user_expiration_type[LANGUAGE_NONE])) {
+      $date1 = opigno_user_expiration_app_get_default_date($group->nid);
+      $form['opigno_user_membership_exp'][LANGUAGE_NONE][0]['#default_value']['value'] = $date1;
+      $form['opigno_user_membership_exp'][LANGUAGE_NONE][0]['#default_value']['value2'] = $date1;
+    }
+  }
+
+  if ($form['#id'] == 'og-ui-confirm-subscribe') {
+    $form['opigno_user_membership_exp']['#access'] = FALSE;
+  }
+  if (isset($form['gid']['#value']) && ($form['gid']['#value'] != 0)) {
+    $node = node_load($form['gid']['#value']);
+    if ($node->type == "class") {
+      $form['membership_fields']['opigno_user_membership_exp']['#access'] = FALSE;
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function opigno_user_expiration_app_form_og_massadd_massadd_form_alter(&$form, $form_state) {
+  $gid = current($form['group_ids']['#value']);
+  $node = node_load($gid);
+  // Use current time (timestamp) for registration date.
+  if ((isset($node)) && ($node->type == "course")) {
+    $form['user_expiration'] = array(
+      '#type' => 'date_popup',
+      '#title' => t("User Expiration"),
+      '#default_value' => opigno_user_expiration_app_get_default_date($node->nid),
+      '#description' => t("The expiration date for the users"),
+      '#date_format' => 'd/m/Y',
+      '#weight' => -10,
+    );
+    $form['#submit'][] = 'opigno_user_expiration_app_form_og_massadd_massadd_form_add_expiration';
+  }
+}
+
+/**
+ * Submit callback for hook_form_og_massadd_massadd_form_alter().
+ * Add expiration date.
+ */
+function opigno_user_expiration_app_form_og_massadd_massadd_form_add_expiration($form, $form_state) {
+  foreach ($form_state['values']['_massadd'] as $uid) {
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'og_membership', '=')
+      ->propertyCondition('gid', current($form_state['values']['group_ids']), '=')
+      ->propertyCondition('entity_type', 'user', '=')
+      ->propertyCondition('etid', $uid, '=');
+    $result = $query->execute();
+
+    $og_membership = og_membership_load(current($result['og_membership'])->id);
+    $og_membership->opigno_user_membership_exp[LANGUAGE_NONE][0]['value'] = $form_state['values']['user_expiration'];
+    og_membership_save($og_membership);
+  }
+}
+
+/**
+ * Implements hook_og_membership_insert().
+ */
+function opigno_user_expiration_app_og_membership_insert($og_membership) {
+  $group = node_load($og_membership->gid);
+  if (!isset($_POST['form_id']) || (($_POST['form_id'] !== 'og_ui_add_users') && ($_POST['form_id'] !== 'og_massadd_massadd_form'))) {
+    if ((og_is_group('node', $group)) && ($og_membership->entity_type == "user") && ($og_membership->is_new == TRUE)) {
+      if ((isset($group->opigno_user_expiration_amount[LANGUAGE_NONE])) && (isset($group->opigno_user_expiration_type[LANGUAGE_NONE]))) {
+        if (!isset($og_membership->opigno_user_membership_exp[LANGUAGE_NONE][0]['value'])) {
+          $date1 = opigno_user_expiration_app_get_default_date($group->nid);
+          $og_membership->opigno_user_membership_exp[LANGUAGE_NONE][0]['value'] = $date1;
+          $og_membership->opigno_user_membership_exp[LANGUAGE_NONE][0]['value2'] = $date1;
+          field_attach_presave('og_membership', $og_membership);
+          field_attach_update('og_membership', $og_membership);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Sets user expiration default date.
+ */
+function opigno_user_expiration_app_get_default_date($nodeid) {
+  $group = node_load($nodeid);
+  if ((isset($group->opigno_user_expiration_amount[LANGUAGE_NONE])) && (isset($group->opigno_user_expiration_type[LANGUAGE_NONE]))) {
+    $date = date_create(date("Y-m-d 00:00:00"));
+    // Save type and amount in the language it currently would be displayed.
+    $type = field_get_items('node', $group, 'opigno_user_expiration_type');
+    $amount = field_get_items('node', $group, 'opigno_user_expiration_amount');
+    if (in_array($type[0]['value'], array('day', 'week', 'month', 'year'))) {
+      date_add($date, date_interval_create_from_date_string('+ ' . $amount[0]['value'] . $type[0]['value']));
+    }
+    $date1 = date_format($date, 'Y-m-d H:i:s');
+    $date1[10] = 'T';
+    return $date1;
+  }
+  return '';
+}

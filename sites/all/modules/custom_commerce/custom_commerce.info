@@ -1,0 +1,5 @@
+name = Custom Commerce Module
+description = Custom commerce overrides
+version = 0.1
+core = 7.x
+package = PointRadius
