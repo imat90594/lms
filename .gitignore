@@ -1,3 +1,4 @@
 *
 !.gitignore
-!/sites/all
+!/sites
+!*/
