@@ -17,7 +17,11 @@
       <?php print render($title_suffix); ?>
       
       
-      <?php // if (!empty($og_context_navigation)): ?>
+      <div id="og-context-navigation">
+      	<?php print $og_context_navigation; ?>
+      </div>
+              
+      <?php if (!empty($og_context_navigation)): ?>
       	<?php if (!in_array('authenticated user', $user->roles) && !in_array('anonymous user', $user->roles)):?>
         <div id="og-context-navigation">
           <?php print $og_context_navigation; ?>
@@ -25,7 +29,7 @@
         <?php endif; ?>
       <?php endif; ?>
     </div>
-  <?php // endif; ?>
+  <?php endif; ?>
 
   <?php if (!empty($messages)): ?>
     <div id="messages">

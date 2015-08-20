@@ -13,6 +13,70 @@ function custom_commerce_menu(){
     return $items;
 }
 
+function custom_commerce_block_info() {
+  $blocks['course_notification_expiration'] = array(
+	    'info' => t('Course Notification Expiration'),
+	    'status' => TRUE,
+	    'region' => 'content',
+	    'visibility' => BLOCK_VISIBILITY_NOTLISTED,
+	    'pages' => ""
+  );
+  
+  return $blocks;
+}
+
+function custom_commerce_block_view($delta = '')
+{
+  $block = array();
+
+  switch ($delta) {
+    case 'course_notification_expiration':
+      $block['content'] = course_notification_block_template();
+    break;
+
+  }
+
+  return $block;
+}
+
+
+
+function course_notification_block_template() {
+	global $user;
+	
+	$result = db_select('og_membership', 'm');
+	$result->join('field_data_opigno_user_membership_exp', 'me', 'm.id = me.entity_id');
+	$result->join('node', 'n', 'n.nid = m.gid');
+	
+	$result = $result->fields('m', array('gid'))
+	->fields('me', array('entity_id', 'opigno_user_membership_exp_value'))
+	->fields('n', array('title'))
+    ->condition('m.etid', $user->uid, '=')
+    ->condition('m.entity_type', 'user', '=')
+    ->execute();
+	
+	
+	$near_expiration_courses = "";
+	
+	foreach ($result as $row) {
+		
+		$date1 = new DateTime(date("Y-m-d"));
+		$date2 = new DateTime(date("Y-m-d", strtotime($row->opigno_user_membership_exp_value)));
+		$interval = $date1->diff($date2);
+		
+		//check if course is about to expired
+		if($interval->days <= 14) {
+			$row->expiration_days =  $interval->days;
+			$near_expiration_courses[] = $row;
+			//dpm($row);
+			//dpm( "difference " . $interval->days . " days ");
+		}
+	}
+	
+	
+	return theme('course_notification_expiration', array('courses' => $near_expiration_courses));
+}
+
 
 function buy_course($product_id){
 	global $user;
@@ -54,7 +118,6 @@ function buy_course($product_id){
 	}
 	
 }
-
 
 
 
@@ -216,8 +279,18 @@ function custom_commerce_theme($existing, $type, $theme, $path) {
         ),
         'template' => 'invoice_receipt',
         'path' => drupal_get_path('module', 'custom_commerce').'/template',
-      )
-    );
+      ),
+      
+      'course_notification_expiration' => array(
+        'variables' => array(
+			'courses' => null,
+        ),
+        'template' => 'course_notification_expiration',
+        'path' => drupal_get_path('theme', 'first').'/templates/blocks/course_notification_expiration',
+     ),
+  	  
+	  
+	);
   }
 }
 
