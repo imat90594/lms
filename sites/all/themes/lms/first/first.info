@@ -12,6 +12,7 @@ stylesheets[all][] = css/hacks.css
 stylesheets[all][] = css/styles.css
 stylesheets[all][] = css/color.css
 stylesheets[all][] = css/styleguide.css
+stylesheets[all][] = css/first.css
 
 scripts[] = js/vendor/modernizr/modernizr.min.js
 scripts[] = js/platon.js

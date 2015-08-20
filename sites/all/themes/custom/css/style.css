@@ -1,4 +1,34 @@
-/**
- * This file should get overwritten if Method 1 is used. If Method 2 is chosen,
- * remove this comment and start adding your styles to this file.
- */
+/* page checkout form element overrides */
+
+.page-checkout fieldset {
+	background-color:white;
+}
+
+.page-checkout .form-item {
+	width:100%;
+}
+
+.page-checkout #edit-commerce-payment-payment-details-credit-card-exp-month,
+.page-checkout #edit-commerce-payment-payment-details-credit-card-exp-year {
+	width:30%;
+	display:inline;
+}
+
+label[for="edit-commerce-payment-payment-details-credit-card-exp-month"] {
+	display:block;
+}
+
+
+/* password field overrides */
+
+.password-strength {
+	display:none;
+}
+
+input.password-confirm, input.password-field {
+	width:100%;
+}
+
+.confirm-parent, .password-parent {
+	width:100%;
+}

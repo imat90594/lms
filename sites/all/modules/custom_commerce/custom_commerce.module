@@ -89,8 +89,6 @@ function custom_commerce_commerce_checkout_complete($order) {
 		}
 	}	
 	
-	
-
 	//get the template
 	$invoice_receipt_template = theme('invoice_receipt_email', array('order_obj' => array(
 		"order" 	=> $order,
@@ -113,6 +111,20 @@ function custom_commerce_commerce_checkout_complete($order) {
 }
 
 
+//-----------------------------------------------------------------------------
+//forms overrides
+
+function custom_commerce_form_alter(&$form, &$form_state, $form_id){
+	
+  $form_name = explode("_", $form_id);
+  unset($form_name[count($form_name) - 1]);
+  $form_name = implode("_", $form_name);
+  
+  if($form_name  == "commerce_cart_add_to_cart_form") {
+  	$form['submit']['#value'] = "Buy Now";
+  }
+
+}
 
 
 

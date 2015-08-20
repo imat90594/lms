@@ -1,4 +1,3 @@
-<div class="col-lg-9">
   <?php if (!empty($page['help'])): ?>
     <div id="help">
       <?php print render($page['help']); ?>
@@ -16,14 +15,17 @@
       <?php print render($title_prefix); ?>
       <h1><?php print $title; ?></h1>
       <?php print render($title_suffix); ?>
-
-      <?php if (!empty($og_context_navigation)): ?>
+      
+      
+      <?php // if (!empty($og_context_navigation)): ?>
+      	<?php if (!in_array('authenticated user', $user->roles) && !in_array('anonymous user', $user->roles)):?>
         <div id="og-context-navigation">
           <?php print $og_context_navigation; ?>
         </div>
+        <?php endif; ?>
       <?php endif; ?>
     </div>
-  <?php endif; ?>
+  <?php // endif; ?>
 
   <?php if (!empty($messages)): ?>
     <div id="messages">
@@ -45,7 +47,7 @@
 
   <div id="content">
     <?php print render($page['content']); ?>
-    <?php print render($page['content_bottom']); ?>
+    <?php // print render($page['content_bottom']); ?>
   </div>
 
   <?php if (($action_links)&&((isset($node)&&($node->type=="course")))): ?>
@@ -53,5 +55,3 @@
       <?php print render($action_links); ?>
     </ul>
   <?php endif; ?>
-
-</div>

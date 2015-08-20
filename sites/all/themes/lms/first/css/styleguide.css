@@ -34,40 +34,40 @@
 
 body { 
   /*For overall default styling*/
-  font-size: 1.1em;
+  font-size: 1.5em;
   font-style: 'Roboto-Medium';
-  letter-spacing: 2px;
-  line-height: 1;
+  /*letter-spacing: 2px;*/
+  /*line-height: 1;*/
 }
 
 /* Base Headers Style */
 h1, h2, h3, h4, h5, h6 {
   font-style: 'Vidaloka-Regular';
-  letter-spacing: 0.5em;
+  /*letter-spacing: 0.5em;*/
 }
 h1 {
   font-size: 3.5em;
-  line-height: 1;  
+  /*line-height: 1;*/
 }
 h2 {
   font-size: 3em;
-  line-height: 1; 
+  /*line-height: 1;*/
 }
 h3 {
   font-size: 2.5em;
-  line-height: 1;
+  /*line-height: 1;*/
 }
 h4 {
   font-size: 2em;
-  line-height: 1;
+  /*line-height: 1;*/
 }
 h5 {
   font-size: 1.5em;
-  line-height: 1;
+  /*line-height: 1;*/
 }
 h6 {
   font-size: 1em;
-  line-height: 1;
+  /*line-height: 1;*/
 }
 
 /* Buttons Style Guide */
@@ -175,5 +175,7 @@ label {}
 
 .no-float {clear: both !important;}
 
-
+.breadcrumb {
+    background-color: #fff !important;
+}
 

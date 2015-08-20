@@ -1,8 +1,8 @@
 <?php if (!empty($page['footer'])): ?>
-  <footer id="site-footer">
+  <footer id="">
     <div class="row">
       <div class="col span_6">
-        <?php print render($page['footer']); ?>
+        <?php //print render($page['footer']); ?>
       </div>
     </div>
   </footer>
