@@ -9,9 +9,89 @@ function custom_commerce_menu(){
         'page arguments'   => array(1),
         'access callback' => TRUE,
     );
+	
+    $items['extend/%'] = array(
+        'title' 		   => 'Extend Course',
+        'description' 	   => 'Extend course',
+        'page callback'    => 'extend_course',
+        'page arguments'   => array(1),
+        'access callback' => TRUE,
+    );
 		
     return $items;
 }
+
+
+function extend_course($course_id){
+	global $user;
+	
+	// check if user is really enrolled on the course
+	$result = db_select('og_membership', 'm');
+	$result->join('node', 'n', 'n.nid = m.gid');
+	$result->join('field_data_opigno_user_membership_exp', 'me', 'm.id = me.entity_id');
+	
+	$course = $result->fields('m', array('gid', 'id'))
+	  ->fields('n', array('title'))
+	  ->fields('me', array('opigno_user_membership_exp_value'))
+	  ->condition('m.gid', $course_id, '=')
+	  ->condition('m.etid', $user->uid, '=')
+	  ->condition('m.entity_type', 'user', '=')
+      ->execute()
+	  ->fetchAssoc();
+			  
+	if ($course) {
+		// Create the new order in checkout; you might also check first to
+		// see if your user already has an order to use instead of a new one.
+		$order = commerce_order_new($user->uid, 'checkout_checkout');
+		// Save the order to get its ID.
+		commerce_order_save($order);
+		
+		// Link anonymous user session to the cart
+		if (!$user->uid) {
+		    commerce_cart_order_session_save($order->order_id);
+		}
+		
+		// Load whatever product represents the item the customer will be
+		// paying for and create a line item for it.
+		$product = commerce_product_load(6);
+		
+		
+		if($product) {
+			 $line_item = commerce_product_line_item_new($product, 1, $order->order_id, array(), 'product');
+			
+			 $data = array(
+			 	"course_id" => $course["id"],
+			 	"course_title" => $course["title"],
+			 	"membership_date_expiration" => $course["opigno_user_membership_exp_value"]
+			 ); 
+			 
+			 $line_item->data = $data;
+			 
+			// Save the line item to get its ID.
+			commerce_line_item_save($line_item);
+			
+			// Add the line item to the order using wrapper.
+			$order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+			$order_wrapper->commerce_line_items[] = $line_item;
+			
+			// Save the order again to update its line item reference field.
+			commerce_order_save($order);
+			
+			// Redirect to the order's checkout form. Obviously, if this were a
+			// form submit handler, you'd just set $form_state['redirect'].
+			drupal_goto('checkout/' . $order->order_id);
+			
+		} else {
+			drupal_goto('/');
+		}
+		
+	} else {
+		drupal_goto('/');
+	}
+}
+
+
+
 
 function custom_commerce_block_info() {
   $blocks['course_notification_expiration'] = array(
@@ -24,6 +104,7 @@ function custom_commerce_block_info() {
   
   return $blocks;
 }
+
 
 function custom_commerce_block_view($delta = '')
 {
@@ -73,7 +154,6 @@ function course_notification_block_template() {
 		}
 	}
 	
-	
 	return theme('course_notification_expiration', array('courses' => $near_expiration_courses));
 }
 
@@ -121,11 +201,12 @@ function buy_course($product_id){
 
 
 
+
+
 function custom_commerce_commerce_checkout_complete($order) {
   	
   	$products = array();
 	$other_line_items = array();
-	
 	
 	//extract the product line items
 	foreach ($order->commerce_line_items as $delta => $line_item_wrapper) {
@@ -133,6 +214,7 @@ function custom_commerce_commerce_checkout_complete($order) {
 
 			//get product line item by line item id
 			$product_line_item  = commerce_line_item_load($line_item_id["line_item_id"]);
+			
 			
 			if($product_line_item->type == "product") {
 				//get product id by product line item
@@ -145,12 +227,19 @@ function custom_commerce_commerce_checkout_complete($order) {
 				$product->product_line_item = $product_line_item;
 		
 				$products[] = $product;
+				
+				//if line item is extend course do the query of extension
+				if($product_line_item->line_item_label == "EXTEND-COURSE") {
+					extend_course_query($product_line_item->data);
+				}
+				
 			}
 			else {
 				$other_line_items[] = $product_line_item;
 			}
 		}
 	}	
+	
 	
 	//get the template
 	$invoice_receipt_template = theme('invoice_receipt_email', array('order_obj' => array(
@@ -173,6 +262,25 @@ function custom_commerce_commerce_checkout_complete($order) {
 	$send_receipt = custom_commerce_mail_send($email_details);
 }
 
+
+
+//-----------------------------------------------------------------------------
+//extend course query
+
+function extend_course_query($course_details) {
+	
+	$date     = strtotime($course_details["membership_date_expiration"]);
+	$extended_date = date("Y-m-d", strtotime("+1 month", $date))."T00:00:00";
+
+	$updated = db_update('field_data_opigno_user_membership_exp') 
+	  ->fields(array(
+	    'opigno_user_membership_exp_value' => $extended_date
+	  ))
+	  ->condition('entity_id', $course_details["course_id"], '=')
+	  ->execute();
+	  
+	field_cache_clear();
+}
 
 //-----------------------------------------------------------------------------
 //forms overrides
