@@ -19,6 +19,29 @@
 		</div>
 		
 		<div class="col-md-12">	
+			<div class="panel panel-default payment-container">
+				<div class="panel-heading">
+					<h4>Coupons</h4>
+				</div>
+				<div class="panel-body billing-info">
+					<div class="row card-logo">
+						<div class="col-md-12 text-center">
+							<div id="commerce-checkout-coupon-ajax-wrapper">
+								<?php echo render($form["commerce_coupon"]["redeemed_coupons"])?>
+							</div>
+						</div>
+						<div class="col-md-12">
+							<?php echo render($form["commerce_coupon"]["coupon_code"])?>
+						</div>
+						<div class="col-md-12">
+							<?php echo render($form["commerce_coupon"]["coupon_add"])?>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>	
+		
+		<div class="col-md-12">	
 			<div class="panel panel-default billing-container" id="billing">
 				<div class="panel-heading">
 					<h4>Billing Information</h4>
@@ -52,6 +75,8 @@
 				</div>
 			</div>
 		</div>	
+	</div>	
+
 	</div>	
 	
 	<div class="col-md-12">
