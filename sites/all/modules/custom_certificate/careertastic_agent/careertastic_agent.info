@@ -1,5 +1,0 @@
-name = Agent Module for Careertastic by PR
-description = Agent Module
-version = 0.1
-core = 7.x
-package = Custom Module for Careertastic by PR
