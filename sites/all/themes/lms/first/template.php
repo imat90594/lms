@@ -4,6 +4,12 @@ function first_preprocess_html (&$variables) {
 	
 }
 
+function first_form_element($vars) {
+	echo kprint_r($vars, true);
+}
+
+
+
 function first_preprocess_page (&$variables) {
 	
 	if ($node = menu_get_object()) {

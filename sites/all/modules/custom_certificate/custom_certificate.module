@@ -1,0 +1,124 @@
+<?php
+
+
+
+function custom_certificate_menu(){
+    $items['certficates/get/%'] = array(
+        'title' 		   => 'Dashboard',
+        'description' 	   => 'Dashboard of agents account',
+        'page callback'    => 'get_certificate',
+        'page arguments'   => array(2),
+        'access callback'  => array('access content'),
+        'access arguments' => array(2)
+    );
+		
+    return $items;
+}
+
+function custom_certificate_menu_alter(&$items) {
+	
+	 $items['certficates/get/%']['access callback'] = 'certificate_user_access';
+}
+
+function certificate_user_access($course_id){
+	global $user;
+	$account = user_load($user->uid);
+	
+	if(opigno_certificate_app_user_passed($course_id, $account->uid)) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+
+}
+
+function get_certificate($course_id) {
+	require_once('sites/all/modules/custom_certificate/lib/fpdf/fpdf.php');
+	require_once('sites/all/modules/custom_certificate/lib/fpdf/fpdi.php');
+	module_load_include('inc','webform','includes/webform.submissions');
+	
+	global $user;
+	$account = user_load($user->uid);
+	$course  = node_load($course_id);	
+	$certificate = webform_get_submissions(52, 1);
+	
+	
+	$file            = file_load($certificate[1]->data[1][0]);
+	$file 			 = $file->uri;
+	$color           = explode(",", $certificate[1]->data[2][0]);
+	$name_position   = explode(",", $certificate[1]->data[3][0]);
+	$course_position = explode(",", $certificate[1]->data[4][0]);
+	$date_position   = explode(",", $certificate[1]->data[5][0]);
+	
+
+	$pdf = new FPDI();
+	$pdf->AddPage();
+	
+	$pagecount = $pdf->setSourceFile($file);
+	$tpl = $pdf->importPage(1);
+	$pdf->useTemplate($tpl);
+	
+	$pdf->SetDrawColor(0,80,180);
+	$pdf->SetTextColor($color[0], $color[1], $color[2]);
+	$pdf->SetFont('Arial','B',16);
+	$pdf->SetY($name_position[0]);
+	$pdf->SetX($name_position[1]);
+	$pdf->Cell(0, 0, $account->field_first_name['und'][0]['value'] . ' ' . $account->field_last_name['und'][0]['value']);
+	$pdf->SetY($course_position[0]);
+	$pdf->SetX($course_position[1]);
+	$pdf->Cell(0, 0, $course->title);
+	$pdf->SetY($date_position[0]);
+	$pdf->SetX($date_position[1]);
+	$pdf->Cell(0, 0, date("F d, Y"));
+	
+	
+	$pdf->Output();
+	
+	die;
+	
+		
+}
+
+
+function custom_certificate_form_webform_client_form_52_alter(&$form, &$form_state, $form_id) {
+	$form["#submit"][] = "preview_certificate";
+}
+
+function preview_certificate(&$form, &$form_state) {
+	
+	$file            = file_load($form_state["input"]["submitted"]["pdf_template"]["fid"]);
+	$file 			 = $file->uri;
+	$color           = explode(",", $form_state["input"]["submitted"]["rgb_color"]);
+	$name_position   = explode(",", $form_state["input"]["submitted"]["name_x_and_y_position"]);
+	$course_position = explode(",", $form_state["input"]["submitted"]["course_x_and_y_position"]);
+	$date_position   = explode(",", $form_state["input"]["submitted"]["date_x_and_y_position"]);
+	
+	require_once('sites/all/modules/custom_certificate/lib/fpdf/fpdf.php');
+	require_once('sites/all/modules/custom_certificate/lib/fpdf/fpdi.php');
+	
+	
+	$pdf = new FPDI();
+	$pdf->AddPage();
+	
+	$pagecount = $pdf->setSourceFile($file);
+	$tpl = $pdf->importPage(1);
+	$pdf->useTemplate($tpl);
+	
+	$pdf->SetDrawColor(0,80,180);
+	$pdf->SetTextColor($color[0], $color[1], $color[2]);
+	$pdf->SetFont('Arial','B',16);
+	$pdf->SetY($name_position[0]);
+	$pdf->SetX($name_position[1]);
+	$pdf->Cell(0, 0,'Sample First Name Last Name');
+	$pdf->SetY($course_position[0]);
+	$pdf->SetX($course_position[1]);
+	$pdf->Cell(0, 0,'Sampe Course Name');
+	$pdf->SetY($date_position[0]);
+	$pdf->SetX($date_position[1]);
+	$pdf->Cell(0, 0,'August 26, 2015');
+	
+	
+	$pdf->Output();
+	
+	die;
+}

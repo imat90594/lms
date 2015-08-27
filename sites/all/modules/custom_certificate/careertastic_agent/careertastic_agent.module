@@ -1,0 +1,917 @@
+<?php
+
+function careertastic_agent_menu(){
+    $items['agents/%'] = array(
+        'title' 		   => 'Dashboard',
+        'description' 	   => 'Dashboard of agents account',
+        'page callback'    => 'careertastic_agent_dashboard',
+        'page arguments'   => array(1),
+        'access callback'  => array('access content'),
+        'access arguments' => array(1)
+    );
+	
+    $items['agents/%/courses'] = array(
+        'title' 		   => 'Sold Courses',
+        'description' 	   => 'Listing of all sold courses',
+        'page callback'    => 'careertastic_agent_sold_courses',
+        'page arguments'   => array(1),
+        'access callback'  => array('access content'),
+        'access arguments' => array(1)
+    );
+	
+    $items['agents/%/invoices'] = array(
+        'title' 		   => 'Payment History',
+        'description' 	   => 'Listing of all payments made by the admin',
+        'page callback'    => 'careertastic_agent_payment_history',
+        'page arguments'   => array(1),
+        'access callback'  => array('access content'),
+        'access arguments' => array(1)
+    );
+	
+    $items['agents/%/settings'] = array(
+        'title' 		   => 'Agent Profile Settings',
+        'description' 	   => 'Agent Profile Settings',
+        'page callback'    => 'careertastic_agent_agent_settings',
+        'page arguments'   => array(1),
+        'access callback'  => array('access content'),
+        'access arguments' => array(1)
+    );
+	
+	$items['agents/%/load-payment/%'] = array(
+        'title' 		   => 'Payment Detailed Information',
+        'description' 	   => 'Payment information',
+        'page callback'    => 'careertastic_agent_payment_info',
+        'page arguments'   => array(1, 3),
+        'access callback'  => array('access content'),
+        'access arguments' => array(1),
+        'type' 		 	   => MENU_CALLBACK,
+    );	
+    
+    $items['agents/%/payment/ipn'] = array(
+        'title' 		   => 'IPN',
+        'description' 	   => 'IPN Processing',
+        'page callback'    => 'careertastic_agent_payment_ipn',
+        'page arguments'   => array(1),
+        'access callback'  => array('access content'),
+        'access arguments' => array(1)
+    );
+	
+	$items['admin/config/agents/settings'] = array(
+		'title'		  		=> 'Agents Settings',
+		'description' 		=> 'Configuration for agents page',
+		'page callback' 	=> 'drupal_get_form',
+		'page arguments'	=> array('careertastic_agent_admin'),
+		'access arguments'  => array('administer site configuration'),
+		'type' 				=> MENU_NORMAL_ITEM,
+	);
+	
+	$items['admin/config/agents'] = array(
+		'title'		  		=> 'Agents',
+		'description' 		=> 'Configuration for agents page',
+	    'page callback' => 'system_admin_menu_block_page',
+	    'access arguments' => array('administer site configuration'),
+	    'file' => 'system.admin.inc',
+	    'file path' => drupal_get_path('module', 'system'),
+  	);
+	
+    return $items;
+}
+
+
+function careertastic_agent_admin() {
+  $form = array();
+
+  $form['agent_payment_duedate'] = array(
+    '#type' => 'select',
+    '#title' => t('Agent Payment Day'),
+    '#default_value' => variable_get('agent_payment_duedate'),
+  	"#options" => array(
+	    "1"  => t("First day of the month"),
+	    "2" => t("Middle day of the month"), 
+	    "3"   => t("Last day of the month"),
+	 ),
+    '#description' => t("The expected date of payment do be displayed in agent dashboard page."),
+    '#required' => TRUE,
+  );
+
+  return system_settings_form($form);
+}
+
+
+
+function careertastic_agent_menu_alter(&$items) {
+	 $items['agents/%']['access callback'] = 'careertastic_agent_user_access';
+	 $items['agents/%/courses']['access callback'] 	   = 'careertastic_agent_user_access';
+	 $items['agents/%/invoices']['access callback']    = 'careertastic_agent_user_access';
+	 $items['agents/%/settings']['access callback']   		 = 'careertastic_agent_user_access';
+	 $items['agents/%/load-payment/%']['access callback']    = 'careertastic_agent_user_access';
+	 $items['agents/%/payment/ipn']['access callback'] = 'careertastic_agent_ipn_access';
+}
+
+
+//---------------------------------------------------------------------------------
+//USER ACCESS
+
+//filter the access on careertastic agent page
+function careertastic_agent_user_access($account) {
+    global $user;
+	
+	//allow access to admin
+    if($user->uid == 1)
+        return TRUE;
+ 	
+	//allow access to owner and check if it is an agent
+ 	if($user->uid == $account) {
+ 		if(array_key_exists(4, $user->roles)) {
+ 			return TRUE;
+ 		}
+ 	}   
+	
+    return FALSE;
+}
+
+
+//filter the access on careertastic agent page
+function careertastic_agent_ipn_access($account) {
+	return TRUE;
+}
+
+
+//AGENT PAGES
+//---------------------------------------------------------------------------------
+
+function careertastic_agent_dashboard($account){
+
+    global $user;
+	
+	$account = user_load($account);
+	
+	if(isset($account->field_paypal_email['und'][0]['value']) || isset($account->field_bank_account_number['und'][0]['value'])) {
+		$coupon_code = isset($account->field_coupon_id['und'][0]['value']) ? $account->field_coupon_id['und'][0]['value'] : ""; 
+	
+		//get commission
+		$agent = db_select('agent_commissions', 'a')
+	    ->fields('a')
+	    ->condition('coupon_id', $coupon_code, '=')
+	    ->execute();
+		
+		//get payments
+		$payments = db_select('agent_payments', 'a')
+	    ->fields('a')
+	    ->condition('uid', $account->uid, '=')
+		->orderBy('date_paid', 'DESC')
+		->range(0, 4)
+	    ->execute();
+		
+		//reports
+		$this_week	= db_query('SELECT sum(quantity) as count from agent_commissions WHERE YEARWEEK(from_unixtime(date_created)) = YEARWEEK(NOW())')->fetchAssoc();
+		$this_day 	= db_query("SELECT sum(quantity) as count from agent_commissions WHERE date_format(from_unixtime(date_created), '%Y-%m-%d') = CURRENT_DATE()")->fetchAssoc();
+		$this_month = db_query("SELECT sum(quantity) as count from agent_commissions WHERE date_format(from_unixtime(date_created), '%m') = date_format(CURRENT_DATE(), '%m')")->fetchAssoc();
+		
+		$course_sold_report = array("this_day" => $this_day['count'], "this_week" => $this_week['count'], "this_month" => $this_month['count']);
+		
+		
+		$side_nav = theme('agent_side_nav', array("user" => $account->uid));
+		$theme = theme('agent_landing_page', array('agent' => $agent, 'user' => $account, 'payments' => $payments, "side_nav" => $side_nav, "course_sold_report" => $course_sold_report));
+		return $theme;
+	} else {
+		$options = array('query' => array('uncomplete' => 'true'));
+		drupal_goto("agents/$account->uid/settings", $options);	
+	}
+}
+
+
+function careertastic_agent_sold_courses($uid){
+    global $user;
+	
+	$account = user_load($uid);
+	$coupon_code = $account->field_coupon_id['und'][0]['value']; 
+	
+	//get all of sold courses
+	$courses = db_select('agent_commissions', 'a')
+    ->fields('a')
+    ->condition('coupon_id', $coupon_code, '=')
+    ->execute();
+	
+	$side_nav = theme('agent_side_nav', array("user" => $uid));
+	$theme = theme('sold_courses', array('courses' => $courses, 'user' => $account, "side_nav" => $side_nav));
+	return $theme;
+
+}
+
+function careertastic_agent_payment_history($uid){
+    global $user;
+	$account = user_load($uid);
+	
+	//get payments
+	$payments = db_select('agent_payments', 'a')
+    ->fields('a')
+    ->condition('uid', $uid, '=')
+	->orderBy('date_paid', 'DESC')
+    ->execute();
+
+	$side_nav = theme('agent_side_nav', array("user" => $uid));
+	$theme = theme('payment_history', array('payments' => $payments, 'user' => $account, "side_nav" => $side_nav));
+	return $theme;
+}
+
+
+function careertastic_agent_agent_settings($uid){
+    global $user;
+	$account = user_load($uid);
+	
+	$side_nav = theme('agent_side_nav', array("user" => $uid));
+	$theme = theme('agent_settings', array('user' => $account, "side_nav" => $side_nav));
+	return $theme;
+}
+
+
+function careertastic_agent_payment_info($uid, $payment_id) {
+	ctools_include('ajax');
+	
+	$user = user_load($uid);
+
+	//get payments
+	$payment = db_select('agent_payments', 'a')
+    ->fields('a')
+    ->condition('payment_id', $payment_id, '=')
+    ->execute()
+	->fetchAssoc();
+	
+	$transaction_ids = $payment["paid_transactions"];
+	$transaction_ids = json_decode($transaction_ids, true);
+	
+	$commission = db_select('agent_commissions', 'n')
+	->fields('n')
+	->condition('n.transaction_id', $transaction_ids,'IN')
+    ->execute();
+	
+	$output = theme('payment_info', array('payments' => $payment, 'commission' => $commission, 'user' => $user));
+	
+    $commands = array();
+    $commands[] = ajax_command_html('#payment-info-container', render($output));
+	$commands[] = array(
+    'command' => 'render_payment_info_template',
+    //'value1'  => 'My first value', //params1
+    //'value2'  => 'My second value', //params2
+	);
+	
+    print ajax_render($commands); // this function exits.
+    exit;
+}
+
+//PAYMENT PROCESS
+//--------------------------------------------------------------------------------
+
+function careertastic_agent_payment_ipn($account) {
+	require_once('paypal/PPBootStrap.php');
+	$ipnMessage = new PPIPNMessage(null, Configuration::getConfig());
+	
+	$response = $ipnMessage->getRawData();
+	
+	if($ipnMessage->validate()) {
+		if($response["status"] == "COMPLETED") {
+			$uri = $_SERVER["REQUEST_URI"];
+			$uri = explode("/", $uri);
+			$uid = $uri[2];
+			$user = user_load($uid);
+			
+			$amount = str_replace("USD ", "", $response["transaction[0].amount"]);
+			$amount = str_replace(" ", "", $amount);
+			
+			//get all of sold courses
+			$courses = db_select('agent_commissions', 'a')
+		    ->fields('a')
+		    ->condition('coupon_id', $user->field_coupon_id['und'][0]['value'], '=')
+		    ->condition('is_paid', 0, '=')
+		    ->execute();
+			
+			$transaction_ids = "";
+			
+			while($course = $courses->fetchAssoc()) {
+
+				//update transaction is_paid flag
+				$updated = db_update('agent_commissions')
+				  ->fields(array(
+				    'is_paid' => 1
+				  ))
+				  ->condition('transaction_id', $course['transaction_id'], '=')
+				  ->execute();
+				  
+				$transaction_ids[] = $course["transaction_id"];
+			}
+		
+			//check if there is transaction to process
+			if(is_array($transaction_ids)) {
+				//json encode it
+				$transaction_ids = json_encode($transaction_ids);
+				
+				db_insert('agent_payments')
+					 ->fields(array(
+					  'amount' 	 	 => $amount,
+					  'date_paid' 	 => strtotime(date("F-d-Y h:i")),
+					  'method' 		 => "paypal",
+					  'uid' 		 => $user->uid,
+					  'coupon_id'    => $user->field_coupon_id['und'][0]['value'],
+					  'remarks'		 => "Paid through paypal account ". $user->field_paypal_email['und'][0]['value'],
+					  'paid_transactions' => $transaction_ids
+					))
+				->execute();
+					
+				
+				//send email to receiver 
+				$email_template = theme('successfully_paid_receiver', array('response' => $response, "user" => $user));
+				//prepare the email details
+				$email_details = array(
+					"module"  => "careertastic_agent",
+					"key"	  => "successfully_paid_receiver",
+					"to"  	  => $user->mail,
+					"from"    => variable_get('site_mail', ''),
+					"subject" => "You have been successfully paid by Careertastic Admin!",
+					"body"    => $email_template
+				);
+				$send_receipt = careertastic_agent_mail_send($email_details);
+		
+		
+				//send email to admin
+				$email_template = theme('successfully_paid_admin', array('response' => $response, "user" => $user));
+				//prepare the email details
+				$email_details = array(
+					"module"  => "careertastic_agent",
+					"key"	  => "successfully_paid_admin",
+					"to"  	  => variable_get('site_mail', ''),
+					"from"    => variable_get('site_mail', ''),
+					"subject" => "Successful payment for agent!",
+					"body"    => $email_template
+				);
+				$send_receipt = careertastic_agent_mail_send($email_details);
+			}
+			
+		} else {
+				
+			//send email error to admin
+			$email_template = theme('error_paid_admin', array('response' => $response, "user" => $user));
+			//prepare the email details
+			$email_details = array(
+				"module"  => "careertastic_agent",
+				"key"	  => "error_paid_admin",
+				"to"  	  => variable_get('site_mail', ''),
+				"from"    => variable_get('site_mail', ''),
+				"subject" => "Unsuccessful payment for agent!",
+				"body"    => $email_template
+			);
+			$send_receipt = careertastic_agent_mail_send($email_details);
+	
+		}
+		
+	} else {
+		drupal_goto("");
+	}
+
+}
+
+//--------------------------------------------------------------------------------
+function pay_agent_from_bank_action($form, &$form_state){
+	$uid = $form['uid']['#default_value'];
+	$user = user_load($uid);
+	
+	//get all of sold courses
+	$courses = db_select('agent_commissions', 'a')
+    ->fields('a')
+    ->condition('coupon_id', $user->field_coupon_id['und'][0]['value'], '=')
+    ->condition('is_paid', 0, '=')
+    ->execute();
+	
+	$transaction_ids = array();
+	
+	while($course = $courses->fetchAssoc()) {
+
+		//update transaction is_paid flag
+		$updated = db_update('agent_commissions')
+		  ->fields(array(
+		    'is_paid' => 1
+		  ))
+		  ->condition('transaction_id', $course['transaction_id'], '=')
+		  ->execute();
+		  
+		$transaction_ids[] = $course["transaction_id"];
+	}
+
+	//json encode it
+	$transaction_ids = json_encode($transaction_ids);
+	
+	db_insert('agent_payments')
+		 ->fields(array(
+		  'amount' 	 	 => $form['amount']['#default_value'],
+		  'date_paid' 	 => strtotime(date("F-d-Y h:i")),
+		  'method' 		 => "bank transfer",
+		  'uid' 		 => $user->uid,
+		  'coupon_id'    => $user->field_coupon_id['und'][0]['value'],
+		  'remarks'		 => "Paid through bank account ". $user->field_bank_account_number['und'][0]['value'],
+		  'paid_transactions' => $transaction_ids
+		))
+	->execute();
+	
+	
+	$response["transaction[0].amount"] = "$" . $form['amount']['#default_value'];
+	
+	//send email to receiver 
+	$email_template = theme('successfully_paid_receiver', array('response' => $response, "user" => $user));
+	//prepare the email details
+	$email_details = array(
+		"module"  => "careertastic_agent",
+		"key"	  => "successfully_paid_receiver",
+		"to"  	  => $user->mail,
+		"from"    => variable_get('site_mail', ''),
+		"subject" => "You have been successfully paid by Careertastic Admin!",
+		"body"    => $email_template
+	);
+	$send_receipt = careertastic_agent_mail_send($email_details);
+
+
+	//send email to admin
+	$email_template = theme('successfully_paid_admin', array('response' => $response, "user" => $user));
+	//prepare the email details
+	$email_details = array(
+		"module"  => "careertastic_agent",
+		"key"	  => "successfully_paid_admin",
+		"to"  	  => variable_get('site_mail', ''),
+		"from"    => variable_get('site_mail', ''),
+		"subject" => "Successful payment for agent!",
+		"body"    => $email_template
+	);
+	$send_receipt = careertastic_agent_mail_send($email_details);
+	
+}
+
+
+
+//--------------------------------------------------------------------------------
+function pay_agent_action($form, &$form_state) {
+		
+	require_once('paypal/PPBootStrap.php');
+	require_once('paypal/Common/Constants.php');
+	
+	$receiver = array();
+	$receiver = new Receiver();
+	$receiver->email = array($form['receiverEmail[]']['#value']);
+	$receiver->amount = array($form['receiverAmount[]']['#value']);
+	$receiverList = new ReceiverList($receiver);
+	
+	
+	$payRequest = new PayRequest(
+		new RequestEnvelope("en_US"), 
+			 $form['actionType']['#value'],
+			 $form['cancelUrl']['#value'],
+			 $form['currencyCode']['#value'],
+			 $receiverList, 
+			 $form['returnUrl']['#value']);
+			 
+    $domain = (!empty($_SERVER['HTTPS'])) ? "https://".$_SERVER['SERVER_NAME'] : "http://".$_SERVER['SERVER_NAME'];
+	
+	
+	$payRequest->ipnNotificationUrl = "$domain/agents/".$form['uid']['#value']."/payment/ipn";
+			 
+	$service = new AdaptivePaymentsService(Configuration::getAcctAndConfig());
+	try {
+		/* wrap API method calls on the service object with a try catch */
+		$response = $service->Pay($payRequest);
+		$payKey = $response->payKey;
+		$payPalURL = PAYPAL_REDIRECT_URL . '_ap-payment&paykey=' . $payKey;
+		$ack = strtoupper($response->responseEnvelope->ack);
+	
+	
+		if($ack != "SUCCESS") {
+			form_set_error("Error", t('Error on paying, please try again!'));
+		}
+		else {
+			drupal_goto($payPalURL);
+		}
+	
+	} catch(Exception $ex) {
+		require_once 'paypal/Common/Error.php';
+		exit;
+	}
+}
+
+function pay_agent_form ($form, &$form_state) {
+		
+	$uri = $_SERVER["REQUEST_URI"];
+	$uri = explode("/", $uri);
+	$uid = $uri[2];
+	$user = user_load($uid);
+	
+	$domain = (!empty($_SERVER['HTTPS'])) ? "https://".$_SERVER['SERVER_NAME'] : "http://".$_SERVER['SERVER_NAME'];
+
+	
+	$agent = db_select('agent_commissions', 'a')
+    ->fields('a')
+    ->condition('coupon_id', isset($user->field_coupon_id['und'][0]['value'])? $user->field_coupon_id['und'][0]['value'] : "", '=')
+    ->condition('is_paid', 0, '=')
+    ->execute();
+	
+	$total = 0;
+	while($transaction = $agent->fetchAssoc()) {
+		$total += $transaction['commission'];
+	}
+
+	if ($total != 0) 
+		$total = $total / 100;
+
+	
+	$form['#submit'][] = 'pay_agent_action';
+	
+	$form['actionType'] = array(
+	'#type' => 'hidden', 
+	'#title' => 'Action Type',
+	 '#attributes' => array('class' => array('form-control')),
+	'#size' => 10,
+	'#default_value' => "PAY",
+	'#disabled' => TRUE,
+	'#maxlength' => 10,
+	'#required' => TRUE, //make this field required 
+	 );
+  
+	$form['returnUrl'] = array(
+	'#type' 		 => 'hidden', 
+	'#title' 		 => 'Return Url',
+	'#attributes' 	 => array('class' => array('form-control')),
+	'#default_value' => "$domain/agents/$user->uid?success=true",
+	'#disabled' 	 => TRUE,
+	'#maxlength' 	 => 100,
+	'#required' 	 => TRUE, //make this field required 
+	 );
+  
+	$form['cancelUrl'] = array(
+	'#type' => 'hidden', 
+	'#title' => 'Cancel URl',
+	 '#attributes' => array('class' => array('form-control')),
+	'#disabled' => TRUE,
+	'#default_value' => "$domain/agents/$user->uid?cancelled=true",
+	'#maxlength' => 100,
+	'#required' => TRUE, //make this field required 
+	 );
+	 
+	$form['currencyCode'] = array(
+	'#type' => 'hidden', 
+	'#attributes' => array('class' => array('form-control')),
+	'#title' => 'Currency code',
+	'#disabled' => TRUE,
+	'#default_value' => "USD",
+	'#maxlength' => 100,
+	'#required' => TRUE, //make this field required 
+	 );
+	
+	$form['receiverEmail[]'] = array(
+	'#type' => 'hidden', 
+	'#title' => 'Receivers Email',
+	'#attributes' => array('class' => array('form-control')),
+	'#default_value' => isset($user->field_paypal_email['und'][0]['value']) ? $user->field_paypal_email['und'][0]['value'] : "",
+	'#maxlength' => 100,
+	'#required' => TRUE, //make this field required 
+	 );
+  
+	$form['receiverAmount[]'] = array(
+	'#type' => 'hidden', 
+	'#default_value' => $total,
+	'#attributes' => array('class' => array('form-control')),
+	'#title' => 'Amount',
+	'#maxlength' => 100,
+	'#required' => TRUE, //make this field required 
+	 );
+	
+	$form['uid'] = array(
+	'#type' => 'hidden', 
+	'#default_value' => $user->uid,
+	'#attributes' => array('class' => array('form-control')),
+	'#title' => 'User ID',
+	'#maxlength' => 100,
+	'#required' => TRUE, //make this field required 
+	 );
+	 
+	$form['submit_button'] = array(
+   	'#type' => 'submit',
+  	 '#value' => t("Pay $$total this agent"),
+	);
+	
+	return $form;
+}
+
+
+function pay_agent_from_bank_form ($form, &$form_state) {
+		
+	$uri = $_SERVER["REQUEST_URI"];
+	$uri = explode("/", $uri);
+	$uid = $uri[2];
+	$user = user_load($uid);
+	
+	//get all unpaid commission
+	$agent = db_select('agent_commissions', 'a')
+    ->fields('a')
+    ->condition('coupon_id', isset($user->field_coupon_id['und'][0]['value']) ? $user->field_coupon_id['und'][0]['value'] : "", '=')
+    ->condition('is_paid', 0, '=')
+    ->execute();
+	
+	$total = 0;
+	while($transaction = $agent->fetchAssoc()) {
+		$total += $transaction['commission'];
+	}
+
+	if ($total != 0) 
+		$total = $total / 100;
+
+
+	$form['#submit'][] = 'pay_agent_from_bank_action';
+	
+	$form['amount'] = array(
+	'#type' => 'text', 
+	'#default_value' => $total,
+	'#attributes' => array('class' => array('form-control')),
+	'#title' => 'Amount',
+	'#maxlength' => 100,
+	'#required' => TRUE, //make this field required 
+	 );
+	
+	$form['uid'] = array(
+	'#type' => 'text', 
+	'#default_value' => $user->uid,
+	'#attributes' => array('class' => array('form-control')),
+	'#title' => 'User ID',
+	'#maxlength' => 100,
+	'#required' => TRUE, //make this field required 
+	 );
+	 
+	$form['submit_button'] = array(
+   	'#type' => 'submit',
+  	 '#value' => t("Pay"),
+	);
+	
+	return $form;
+}
+
+
+//logging information
+//-------------------------------------------------------------------------------
+
+function log_commission($coupons, $products) {
+	//echo kprint_r($coupons);	
+	
+	if($coupons) {
+		foreach($coupons['und'] as $coupon) {
+			$coupon = commerce_coupon_load($coupon['target_id']);
+			
+			$coupon_code = $coupon->commerce_coupon_code['und'][0]['value'];
+			
+			//check if agent code is existing
+			$agent = db_select('field_data_field_coupon_id', 'a')
+		    ->fields('a')
+		    ->condition('field_coupon_id_value', $coupon_code, '=')
+		    ->execute()
+			->fetchAssoc();
+			
+			//convert amount
+			$converted_amount = commerce_multicurrency_conversion($products[0]->product_line_item->commerce_total['und'][0]['amount'], 
+								$products[0]->product_line_item->commerce_total['und'][0]['currency_code'], 
+								"USD");
+								
+			//if it existing log the commission
+			if($agent) {
+	
+				$agent = user_load($agent["entity_id"]);		
+				
+				 db_insert('agent_commissions')
+				 ->fields(array(
+				  'coupon_id' 	 => $coupon_code,
+				  'percentage' 	 => $agent->field_commission_percentage['und'][0]['value'],
+				  'course_title' => $products[0]->title,
+				  'course_price' => $converted_amount,
+				  'commission'   => ($converted_amount) * ($agent->field_commission_percentage['und'][0]['value'] / 100),
+				  'is_paid'		 => 0,
+				  'date_created' => strtotime(date("y-m-d h:i")),
+				  'course_id'    => $products[0]->product_id, 
+				  'quantity'	 => $products[0]->product_line_item->quantity,
+				  'nid'			 => $products[0]->node_info[0]->nid,
+				))
+				->execute();	
+			}
+		}
+	}
+}
+
+
+//for registration of agents
+//-------------------------------------------------------------------------
+
+
+function careertastic_agent_user_presave(&$edit, $account, $category) {
+	$edit['name']  = $account->mail;
+	 
+	if($_SERVER['REQUEST_URI'] ==  "/agents/register") {
+	  	
+	$coupon = commerce_coupon_create('commerce_coupon_pct');
+	$coupon_code = strtoupper(commerce_coupon_generate_coupon_code());
+	$coupon->commerce_coupon_code[LANGUAGE_NONE][0]['value'] = $coupon_code;
+	$coupon->commerce_coupon_number_of_uses[LANGUAGE_NONE][0]['value'] = 99999;
+	$coupon->commerce_coupon_percent_amount[LANGUAGE_NONE][0]['value'] = 20;
+	commerce_coupon_save($coupon);
+
+	$edit["field_coupon_id"]['und'][0]['value'] = $coupon_code;
+	
+	$email_template = theme('agent_coupon_id', array('coupon' => $coupon, 'user' => $account));
+	  
+	//prepare the email details
+	$email_details = array(
+		"module"  => "careertastic_agent",
+		"key"	  => "agent_coupon_id",
+		"to"  	  => $account->mail,
+		"from"    => variable_get('site_mail', ''),
+		"subject" => "Coupon ID for Careertastic Agent.",
+		"body"    => $email_template
+	);
+	
+	//send email invoice receipt to recipient
+	$send_receipt = careertastic_agent_mail_send($email_details);
+ }	
+}
+
+//-------------------------------------------------------------------------------
+//MAIL SET UP
+
+function careertastic_agent_mail_send(array $values = array()) {
+    $module   = $values['module'];
+    $key 	  = $values['key'];
+    $to 	  = $values['to'];
+    $from 	  = $values['from'];
+    $language = isset($values['lang']) ? $values['lang'] : language_default();
+    $params   = array(
+        'subject' => $values['subject'],
+        'body' 	  => $values['body'],
+    );
+	
+	
+    if(array_key_exists('headers', $values)) {
+        $params['headers'] = $values['headers']; //Assumed as an array
+    }
+    
+    $send = TRUE;
+	
+    $mail = drupal_mail($module, $key, $to, $language, $params, $from, $send);
+    
+    if($mail['result']) {
+        return TRUE;
+    } else {
+        $error_msg = 'Failed to send the email in careertastic_agent Module';
+        watchdog('canvas-email', $error_msg, array(), WATCHDOG_ALERT);
+        return FALSE;
+    }
+}
+
+
+
+/**
+ * Implements hook_mail_alter()
+ * @param string $message
+ */
+function careertastic_agent_mail_alter(&$message) {
+    $headers = array(
+        'MIME-Version' => '1.0',
+        'Content-Type' => 'text/html; charset=iso-8859-1; format=flowed',
+        'Content-Transfer-Encoding' => '8Bit',
+        'X-Mailer' => 'Drupal',
+    );
+    foreach ($headers as $key => $value) {
+        $message['headers'][$key] = $value;
+    }
+}
+
+/**
+ * Implements hook_mail()
+ * @param string $key
+ * @param string $message
+ * @param unknown_type $params
+ */
+function careertastic_agent_mail($key, &$message, $params) {
+    //Language Selection
+    $options = array(
+        'langcode' => $message['language']->language,
+    );
+	
+ 	$message['subject']   = $params['subject'];
+    $message['body'][]    = isset($params['body']) ? $params['body'] : NULL;
+    
+    if (isset($params['headers']) && is_array($params['headers'])) {
+        $message['headers'] += $params['headers'];
+    }
+}
+
+
+//----------------------------------------------------------------------------------
+//THEME SET UP
+/**
+ * Implements hook_theme();
+ */
+function careertastic_agent_theme($existing, $type, $theme, $path) {
+  if($type == 'module') {
+    return array(
+	 'test' => array(
+        'template' => 'test',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/email_template',
+      ),
+      
+      'agent_coupon_id' => array(
+        'variables' => array(
+          'user' => null,
+          'coupon' => null
+        ),
+        'template' => 'agent_coupon_id',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/email_template',
+      ),
+      
+      'agent_landing_page' => array(
+        'variables' => array(
+          'user'   => null,
+          'agent' => null,
+          'payments' => null,
+          'side_nav' => null,
+          'course_sold_report' => null
+        ),
+        'template' => 'agent_landing_page',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/template',
+      ),
+      
+      'sold_courses' => array(
+        'variables' => array(
+          'user'   => null,
+          'courses' => null,
+          'side_nav' => null
+        ),
+        'template' => 'sold_courses',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/template',
+      ),
+      
+      'payment_history' => array(
+        'variables' => array(
+          'user'   => null,
+          'payments' => null,
+          'side_nav' => null
+        ),
+        'template' => 'payment_history',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/template',
+      ),
+      
+      'agent_settings' => array(
+        'variables' => array(
+          'user'   => null,
+          'side_nav' => null
+        ),
+        'template' => 'agent_settings',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/template',
+      ),
+      
+      'payment_info' => array(
+        'variables' => array(
+          'user'   => null,
+          'payments' => null,
+          'commission' => null,
+        ),
+        'template' => 'payment_info',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/template',
+      ),
+      
+      'successfully_paid_receiver' => array(
+        'variables' => array(
+          'response'   => null,
+          'user' => null
+        ),
+        'template' => 'successfully_paid_receiver',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/email_template',
+      ),
+      
+      'successfully_paid_admin' => array(
+        'variables' => array(
+          'response'   => null,
+          'user' => null
+        ),
+        'template' => 'successfully_paid_admin',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/email_template',
+      ),
+      
+      'error_paid_admin' => array(
+        'variables' => array(
+          'response'   => null,
+          'user' => null
+        ),
+        'template' => 'error_paid_admin',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/email_template',
+      ),
+      
+  	'agent_side_nav' => array(
+  	  'variables' => array(
+          'user' => null
+        ),
+        'template' => 'agent_side_nav',
+        'path' => drupal_get_path('module', 'careertastic_agent').'/template',
+      ),
+    );
+  }
+}

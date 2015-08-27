@@ -298,7 +298,6 @@ function custom_commerce_form_alter(&$form, &$form_state, $form_id){
 }
 
 
-
 //-----------------------------------------------------------------------------
 //mail functions
 

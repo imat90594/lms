@@ -1,0 +1,5 @@
+name = Custom Certificate Module
+description = Custom certificate for Opigno
+version = 0.1
+core = 7.x
+package = PointRadius
