@@ -7,9 +7,9 @@
 					<span class="icon-bar"></span>
 					<span class="icon-bar"></span>
 				</button>
-				<a class="navbar-brand" href="#"><img src="<?php print $logo; ?>" class="logo"> <!--<span>LEARNING</span>--></a>	  
+				<a class="navbar-brand" href="/"><img src="<?php print $logo; ?>" class="logo"> <!--<span>LEARNING</span>--></a>	  
 			</div>
-			<div class="nav navbar-nav navbar-right">
+			<div class="nav navbar-nav navbar-right hidden-sm hidden-xs">
 				<?php if ($logged_in): ?>
 					<a class="btn btn-primary" href="/user/logout"><span class="glyphicon glyphicon-user"></span> <?php print t("logout") ?></a>
 				<?php else: ?>

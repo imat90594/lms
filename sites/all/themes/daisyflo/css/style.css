@@ -210,7 +210,8 @@ span.course-timer>.course-timer-digits {
 }
 .quiz-question-navigation-wrapper button,
 .quiz-question-navigation-wrapper input,
-.node-type-course .action-links a {
+.node-type-course .action-links a,
+div#nextlink .opigno-quiz-action {
   padding: 10px;
   padding-left: 20px;
   padding-right: 20px;
@@ -237,6 +238,20 @@ span.course-timer>.course-timer-digits {
   background-image: none;
   border: 1px solid transparent;
   border-radius: 4px;
+}
+.quiz-question-navigation-wrapper button:hover,
+.quiz-question-navigation-wrapper button:focus,
+.quiz-question-navigation-wrapper button:active,
+.quiz-question-navigation-wrapper input:hover,
+.quiz-question-navigation-wrapper input:focus,
+.quiz-question-navigation-wrapper input:active,
+.node-type-course .action-links a:hover,
+.node-type-course .action-links a:focus,
+.node-type-course .action-links a:active,
+div#nextlink .opigno-quiz-action:hover, 
+div#nextlink .opigno-quiz-action:focus, 
+div#nextlink .opigno-quiz-action:active {
+  border-color: #c50c6d;
 }
 .q-back-button {
   background-color: #333333 !important;

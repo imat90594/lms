@@ -21,5 +21,8 @@
 	<li class="category sidenav-top-link">
 		<a href="/user/<?php echo $user->uid?>/edit" class="text-secondary tertiary-bg-color state">ACCOUNT</a>
 	</li>              
+	<li class="category sidenav-main-link hidden-md hidden-lg">
+		<a href="/user/logout" class="text-secondary tertiary-bg-color state">LOG OUT</a>
+	</li>              
 </ul>
 <?php endif;?>

@@ -75,7 +75,6 @@
 	<div class="panel-body">												
 		<div class="panel-body">
 		<div id="node-<?php print $node->nid; ?>" class="<?php print $classes; ?> clearfix"<?php print $attributes; ?>>
-		  DESCRIPTION HERE
 		  <?php if ($display_submitted): ?>
 		    <div class="submitted">
 		      <?php print $submitted; ?>
