@@ -1,0 +1,316 @@
+@CHARSET "ISO-8859-1";
+
+/* --- FONTS --- */
+@font-face { 
+    font-family: 'OpenSans-Semibold';
+    src: url('../fonts/OpenSans-Semibold.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face { 
+    font-family: 'OpenSans-Regular';
+    src: url('../fonts/OpenSans-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* --- GLOBAL COLORS --- */
+
+/* Background Colors */ 
+
+.primary-bg-color {
+	background-color: #ffffff !important;
+}
+.primary-bg-color.state:hover,
+.primary-bg-color.state:active,
+.primary-bg-color.state:focus {
+
+}
+.secondary-bg-color {
+	background-color: #333333 !important;
+	color: #ffffff !important;
+}
+.secondary-bg-color.state:hover,
+.secondary-bg-color.state:active,
+.secondary-bg-color.state:focus {
+	background-color: #333333 !important;
+	color: #ffffff;
+}
+.tertiary-bg-color {
+	background-color: #d70c76 !important;
+	color: #ffffff !important;
+}
+.tertiary-bg-color.state:hover,
+.tertiary-bg-color.state:active,
+.tertiary-bg-color.state:focus {
+	background-color: #c50c6d !important;
+	color: #ffffff;
+}
+.muted-bg-color {
+	background-color: #b3b3b3;
+}
+
+/* Font Colors */ 
+.text-primary {
+	color: #333333 !important;
+}
+.text-secondary {
+	color: #ffffff !important;
+}
+.text-tertiary {
+	color: #c50c6d !important;
+}
+.text-success {}
+.text-warning {}
+.text-info {}
+.text-muted {
+  color: #808080;
+}
+
+/* --- BASE STYLES and BOOTSTRAP OVERRIDES --- */
+
+body { 
+  /*For overall default styling*/
+  font-size: 1.5em;
+  font-family: 'OpenSans-Regular';
+  background-color: #f0f0f0;
+  
+  /*letter-spacing: 2px;*/
+  /*line-height: 1;*/
+}
+
+/* Base Headers Style */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'OpenSans-Semibold';
+  /*letter-spacing: 0.5em;*/
+}
+h1 {
+  font-size: 2em;
+  margin-bottom: 25px;
+  /*line-height: 1;*/
+}
+h2 {
+  font-size: 1.5em;
+  /*line-height: 1;*/
+}
+h3 {
+  font-size: 1em;
+  /*line-height: 1;*/
+}
+h4 {
+  font-size: 2em;
+  /*line-height: 1;*/
+}
+h5 {
+  font-size: 1.5em;
+  /*line-height: 1;*/
+}
+h6 {
+  font-size: 1em;
+  /*line-height: 1;*/
+}
+
+a, a:hover {
+  text-decoration: none;
+  color: #333333;
+}
+
+/* Buttons Style Guide */
+/* Bootstrap Buttons Style Override */
+.btn {
+	padding: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+.btn.focus, .btn:focus, .btn:hover {}
+.btn-default {}
+.btn-primary {
+	background-color: #d70c76;
+	border-color: #d70c76;
+}
+.btn-primary:hover {
+	background-color: #c50c6d;
+}
+.btn-success {}
+.btn-success:hover {}
+.btn-info {}
+.btn-info:hover {}
+.btn-warning {}
+.btn-warning:hover {}
+.btn-danger {}
+.btn-danger:hover {}
+.btn-group-lg>.btn, .btn-lg {}
+.btn-group-sm>.btn, .btn-sm {}
+.btn-group-xs>.btn, .btn-xs {}
+
+/* Bootstrap Close Buttons Style Override */
+.close {}
+.close:focus, .close:hover {}
+
+/* Custom Buttons Style Guide */
+.btn-secondary {
+	background-color: #252525!important;
+	border-color: #252525!important;
+}
+.btn-secondary:hover {
+	background-color: #252525!important;
+	border-color: #252525!important;
+	color:white;
+}
+.btn-tertiary {}
+.btn-tertiary:hover {}
+
+/* Forms Style Guide */
+/* Base Forms Style */
+label {}
+/* Forms Bootstrap Overrides */
+.form-control {}
+.form-control:focus {}
+	
+.has-success .form-control {}
+.has-warning .form-control {}
+.has-error .form-control {}
+
+.input-group-addon {}
+
+.checkbox label, .radio label {}
+
+.has-success .checkbox,
+.has-success .checkbox-inline, 
+.has-success .control-label, 
+.has-success .help-block,
+.has-success .radio, 
+.has-success .radio-inline, 
+.has-success.checkbox label, 
+.has-success.checkbox-inline label, 
+.has-success.radio label, 
+.has-success.radio-inline label {
+	
+}
+
+.help-block {}
+
+/* Table Style Guide */
+/* Table Bootstrap Overrides */
+.table-hover>tbody>tr:hover {}
+.table-striped>tbody>tr:nth-of-type(odd) {}
+
+/* Contextual Background Style */
+
+.bg-primary {}
+.bg-success {}
+.bg-info {}
+.bg-warning {}
+.bg-danger {}
+
+.bg-secondary {}
+.bg-tertiary {}
+
+/* Bootstrap Panels Overrides */
+.panel {
+    margin-bottom: 30px;
+    border: 1px solid #c2c2c2;
+    border-radius: 0px;
+    -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+    box-shadow: 0 1px 1px rgba(0,0,0,.05);
+}
+.panel-default {
+	background-color: #fff;
+}
+.panel-default>.panel-heading {
+    background-color: #c2c2c2;
+    border-color: #c2c2c2;
+}
+.panel-primary {}
+/* Custom Panel Styles */
+.panel-secondary {
+  background-color: #d70c76;
+  border-color: #d70c76;
+}
+.panel-tertiary {}
+.panel-footer {
+    background-color: #ffffff;
+	border-top: 1px solid #c2c2c2;
+	border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+	padding-top: 20px;
+	padding-bottom: 20px;
+	text-align: right;
+}
+
+/* Modal Content */
+.modal-content {}
+
+/* Custom CSS Helpers */
+/* 
+ * Helper Classes are high priority. 
+ * Therefore requires !important.
+ */
+ 
+.no-padding {padding: 0px !important;}
+.no-padding-left {padding-left: 0px !important;}
+.no-padding-right {padding-right: 0px !important;}
+.no-padding-top {padding-top: 0px !important;}
+.no-padding-bottom {padding-bottom: 0px !important;}
+
+.no-margin {margin: 0px, 0px, 0px, 0px !important;}
+.no-margin-left {margin-left: 0px !important;}
+.no-margin-right {margin-right: 0px !important;}
+.no-margin-top {margin-top: 0px !important;}
+.no-margin-bottom {margin-bottom: 0px !important;}
+
+.no-float {clear: both !important;}
+
+.breadcrumb {
+    background-color: #fff !important;
+}
+
+/* Nav Overrides */
+
+.navbar-brand {
+	padding: 0px 0px;
+	height: 0px;;
+}
+
+.navbar-header, .navbar-right {
+    background-color: #f8f8f8;
+    border-color: #e7e7e7;
+    padding-top: 15px;
+    padding-bottom: 15px;
+}
+
+.nav>li>a:focus, .nav>li>a:hover {
+    text-decoration: none;
+    background-color: #eee;
+}
+
+/* Progress Bar */
+.progress-bar {
+    background-color: #d70c76;
+}
+
+/* GlyphIcons */
+.glyphicon {
+	width: 25px;
+    text-align: left;
+}
+
+/* Read More */
+.read-more {
+  font-family: 'OpenSans-Semibold';
+}
+
+/* Dividers */
+.h-divider-primary {
+  height: 50px;
+  border-bottom-color: #d70c76;
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+}
+
+@media (min-width: 768px) {
+	.navbar-header {
+		
+	}
+}
+
