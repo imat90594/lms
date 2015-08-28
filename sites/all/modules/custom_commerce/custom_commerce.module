@@ -373,7 +373,7 @@ function custom_commerce_mail($key, &$message, $params) {
 /**
  * Implements hook_theme();
  */
-function custom_commerce_theme($existing, $type, $theme, $path) {
+function custom_certificate_theme($existing, $type, $theme, $path) {
   if($type == 'module') {
     return array(
       'invoice_receipt_email' => array(

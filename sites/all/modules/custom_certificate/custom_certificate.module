@@ -1,7 +1,5 @@
 <?php
 
-
-
 function custom_certificate_menu(){
     $items['certficates/get/%'] = array(
         'title' 		   => 'Dashboard',
@@ -11,13 +9,30 @@ function custom_certificate_menu(){
         'access callback'  => array('access content'),
         'access arguments' => array(2)
     );
+	
+	 $items['certficates/user'] = array(
+        'title' 		   => 'Certificates',
+        'description' 	   => 'Dashboard of agents account',
+        'page callback'    => 'certificate_dashboard',
+        'access callback'  => array('access content'),
+    );
 		
     return $items;
 }
 
 function custom_certificate_menu_alter(&$items) {
-	
 	 $items['certficates/get/%']['access callback'] = 'certificate_user_access';
+	 $items['certficates/user']['access callback'] = 'certificate_user_access_dashboard';
+}
+
+
+function certificate_user_access_dashboard(){
+	global $user;
+	if($user->uid != 0) 
+	return TRUE;
+	else {
+		return false;
+	}
 }
 
 function certificate_user_access($course_id){
@@ -30,6 +45,34 @@ function certificate_user_access($course_id){
 		return FALSE;
 	}
 
+}
+
+
+function certificate_dashboard(){
+	
+	global $user;
+	
+	$result = db_select('og_membership', 'm');
+	$result->join('field_data_opigno_user_membership_exp', 'me', 'm.id = me.entity_id');
+	$result->join('node', 'n', 'n.nid = m.gid');
+	
+	$result = $result->fields('m', array('gid'))
+	->fields('me', array('entity_id', 'opigno_user_membership_exp_value'))
+	->fields('n', array('title'))
+    ->condition('m.etid', $user->uid, '=')
+    ->condition('m.entity_type', 'user', '=')
+    ->execute();
+	
+	$certificates = "";
+	
+	foreach($result as $row) {
+		if(opigno_certificate_app_user_passed($row->gid, $account->uid)) 
+			$certificates[] = $row;
+	}
+	
+	//get the template
+	$theme = theme('certificate_dashboard', array('data' => $certificates));
+	return $theme;
 }
 
 function get_certificate($course_id) {
@@ -75,8 +118,6 @@ function get_certificate($course_id) {
 	$pdf->Output();
 	
 	die;
-	
-		
 }
 
 
@@ -122,3 +163,25 @@ function preview_certificate(&$form, &$form_state) {
 	
 	die;
 }
+
+
+/**
+ * Implements hook_theme();
+ */
+function custom_commerce_theme($existing, $type, $theme, $path) {
+  if($type == 'module') {
+    return array(
+      'certificate_dashboard' => array(
+        'variables' => array(
+          'data' => null
+        ),
+        'template' => 'certificate_dashboard',
+        'path' => drupal_get_path('module', 'custom_certificate').'/template',
+      ),
+	  
+	);
+  }
+}
+
+
+

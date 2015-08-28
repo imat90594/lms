@@ -16,10 +16,10 @@
 <ul class="nav">
 	<li class="sidenav-main-link"><a href="/" class="text-secondary secondary-bg-color state">MY COURSES</a></li>
 	<li class="category sidenav-top-link">
-		<a href="#" class="text-secondary tertiary-bg-color state">CERTIFICATES</a>
+		<a href="/certficates/user" class="text-secondary tertiary-bg-color state">CERTIFICATES</a>
 	</li>              
 	<li class="category sidenav-top-link">
-		<a href="/user" class="text-secondary tertiary-bg-color state">ACCOUNT</a>
+		<a href="/user/<?php echo $user->uid?>/edit" class="text-secondary tertiary-bg-color state">ACCOUNT</a>
 	</li>              
 </ul>
 <?php endif;?>
