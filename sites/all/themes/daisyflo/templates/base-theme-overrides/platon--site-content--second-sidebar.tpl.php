@@ -1,4 +1,12 @@
- <?php if (isset($page['#views_contextual_links_info']['views_ui']['view']->name)):?>
+<?php  if (in_array('administrator', $user->roles)): ?>
+        <div id="og-context-navigation">
+          <?php print $og_context_navigation; ?>
+        </div>
+<?php endif; ?>
+
+
+
+<?php if (isset($page['#views_contextual_links_info']['views_ui']['view']->name)):?>
  	 <?php if (!empty($messages)): ?>
     	<div id="messages">
       	<?php print render($messages); ?>
@@ -25,6 +33,7 @@
   	<?php endif;?>
  
  <?php else: //default page?>
+ 
   <?php if (!empty($page['help'])): ?>
     <div id="help">
       <?php print render($page['help']); ?>
@@ -76,3 +85,8 @@
     </ul>
   <?php endif; ?>
 <?php endif; //for page detection?>
+
+
+<?php if(drupal_is_front_page()):?>
+<?php print render($page['content']); ?>
+<?php endif?>

@@ -5,7 +5,7 @@
 			<h2><?php print $fields['title']->content;?></h2>
 		</div>
 		<div class="col-md-6 course-card-timer">
-			<span class="course-icon"><img src="pup.png"></span>
+			<span class="course-icon"><img src="/sites/all/themes/daisyflo/img/theme/pup.png"></span>
 			<span class="course-teaser">
 				<a href="#" class="text-muted">Start this course now!</a>
 			</span>
@@ -13,8 +13,7 @@
 	</div>
 	<div class="row course-card-body">
 		<div class="col-md-3 course-thumbnail">
-			<div class="course-thumbnail-placeholder" style="background-image: url(course-thumbnail.jpg)">
-				<?php print $fields['opigno_course_image']->content;?>
+			<div class="course-thumbnail-placeholder" style="background-image: url('<?php print strip_tags($fields['opigno_course_image']->content);?>')">
 			</div>
 		</div>
 		<div class="col-md-9 course-details">
@@ -28,7 +27,8 @@
 	</div>
 </div>
 <div class="panel-footer">
-	<?php print $fields['add_to_cart_form']->content;?>
-	<a class="btn btn-primary">START COURSE</a>
+	<span class="buy-now-container">	
+		<?php print $fields['add_to_cart_form']->content;?>
+	</span>
 </div>
 

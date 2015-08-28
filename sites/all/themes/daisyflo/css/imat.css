@@ -2,11 +2,9 @@
 	z-index:0 !important;
 }
 
-
 .alert .close {
 	display:block!important;
 }
-
 
 /* password field overrides */
 
@@ -370,4 +368,33 @@ label[for="edit-commerce-payment-payment-details-credit-card-exp-month--2"]
 	width:20%;
 	text-align:center;
 }
+
+
+/** DASHBOARD **/
+	
+.buy-now-container .form-submit {
+    padding: 10px 20px;
+    text-transform: uppercase;
+    background-color: #d70c76;
+    color:white;
+    border-color: #d70c76;
+	display: inline-block;
+    margin-bottom: 0;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.42857143;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -ms-touch-action: manipulation;
+    touch-action: manipulation;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-image: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}	
 
