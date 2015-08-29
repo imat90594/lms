@@ -13,7 +13,7 @@
 	        	<?php echo $course->title?> is about to expired in <?php echo $course->expiration_days?> days. 
 	        	<br />
 	        	<strong>
-	        		<a href="#">Extend your access now!</a>
+	        		<a href="/extend/<?php echo $course->gid?>">Extend your access now!</a>
 	        	</strong>
 			</p>
 		<?php endforeach?>
